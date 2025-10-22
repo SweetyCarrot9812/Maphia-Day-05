@@ -38,13 +38,6 @@ export default function HomePage() {
         <CurrentLocationButton />
       </main>
 
-      {/* Status Badge (개발 중 표시) */}
-      <div className="absolute bottom-6 left-6 z-10 bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-3 text-xs space-y-1">
-        <p className="text-gray-500">✅ Phase 0: 프로젝트 초기화</p>
-        <p className="text-gray-500">✅ Phase 2: 지도 표시</p>
-        <p className="text-gray-500">✅ Phase 3: 검색 기능</p>
-        <p className="text-green-600 font-medium">🎉 Phase 4: 리뷰 기능 (완료!)</p>
-      </div>
     </div>
   )
 }
