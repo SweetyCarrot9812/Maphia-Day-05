@@ -2,7 +2,6 @@
 
 import { useEffect } from 'react'
 import { useReviewStore } from '@/stores/reviewStore'
-import { useAuthStore } from '@/stores/authStore'
 import { Star, Trash2, Edit, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -12,7 +11,6 @@ interface ReviewListProps {
 
 export function ReviewList({ placeId }: ReviewListProps) {
   const { reviews, isLoading, fetchReviews, deleteReviewById } = useReviewStore()
-  const { user } = useAuthStore()
 
   useEffect(() => {
     if (placeId) {

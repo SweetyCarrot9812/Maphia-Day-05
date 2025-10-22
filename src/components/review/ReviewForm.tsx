@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { useReviewStore } from '@/stores/reviewStore'
-import { useAuthStore } from '@/stores/authStore'
 import { Star, X } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -18,7 +17,6 @@ export function ReviewForm({ placeId, placeName, onClose, onSuccess }: ReviewFor
   const [content, setContent] = useState('')
   const [hoveredRating, setHoveredRating] = useState(0)
   const { createReview, isLoading } = useReviewStore()
-  const { user } = useAuthStore()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

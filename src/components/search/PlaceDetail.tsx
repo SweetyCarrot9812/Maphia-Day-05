@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { useSearchStore } from '@/stores/searchStore'
-import { useAuthStore } from '@/stores/authStore'
 import type { Place } from '@/types'
 import { X, MapPin, Phone, Star, MessageSquare } from 'lucide-react'
 import { ReviewForm } from '@/components/review/ReviewForm'
@@ -11,7 +10,6 @@ import { toast } from 'sonner'
 
 export function PlaceDetail() {
   const { selectedPlace, setSelectedPlace } = useSearchStore()
-  const { user } = useAuthStore()
   const [showReviewForm, setShowReviewForm] = useState(false)
 
   if (!selectedPlace) return null
