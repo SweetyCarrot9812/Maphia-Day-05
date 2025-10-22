@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useMapStore } from '@/stores/mapStore'
 import { useSearchStore } from '@/stores/searchStore'
 
@@ -11,63 +11,99 @@ interface MapProps {
 export function Map({ className = 'w-full h-full' }: MapProps) {
   const mapRef = useRef<HTMLDivElement>(null)
   const markersRef = useRef<naver.maps.Marker[]>([])
+  const [naverLoaded, setNaverLoaded] = useState(false)
   const { map, center, zoom, setMap, setLoading, currentLocation } = useMapStore()
   const { results, selectedPlace } = useSearchStore()
 
+  // Naver Maps SDK 로드 감지
   useEffect(() => {
-    if (!mapRef.current || map) return
+    if (typeof window === 'undefined') return
 
-    // Naver Maps가 로드되었는지 확인
-    if (typeof naver === 'undefined' || !naver.maps) {
-      console.error('Naver Maps SDK가 로드되지 않았습니다.')
-      setLoading(false)
-      return
+    const checkNaver = () => {
+      if (typeof window.naver !== 'undefined' && window.naver.maps) {
+        setNaverLoaded(true)
+        return true
+      }
+      return false
     }
 
-    // 지도 초기화
-    const mapInstance = new naver.maps.Map(mapRef.current, {
-      center: new naver.maps.LatLng(center.lat, center.lng),
-      zoom,
-      zoomControl: true,
-      zoomControlOptions: {
-        position: naver.maps.Position.TOP_RIGHT,
-      },
-      mapTypeControl: true,
-      mapTypeControlOptions: {
-        position: naver.maps.Position.TOP_LEFT,
-      },
-      scaleControl: true,
-      logoControl: false,
-      mapDataControl: false,
-    })
+    if (checkNaver()) return
 
-    setMap(mapInstance)
+    console.log('Waiting for Naver Maps SDK...')
+    const interval = setInterval(() => {
+      if (checkNaver()) {
+        clearInterval(interval)
+      }
+    }, 100)
 
-    // 지도 이벤트 리스너
-    naver.maps.Event.addListener(mapInstance, 'zoom_changed', () => {
-      const currentZoom = mapInstance.getZoom()
-      useMapStore.setState({ zoom: currentZoom })
-    })
-
-    naver.maps.Event.addListener(mapInstance, 'center_changed', () => {
-      const currentCenter = mapInstance.getCenter()
-      useMapStore.setState({
-        center: { lat: currentCenter.y, lng: currentCenter.x },
-      })
-    })
+    const timeout = setTimeout(() => {
+      clearInterval(interval)
+      console.error('Naver Maps SDK load timeout')
+      setLoading(false)
+    }, 10000)
 
     return () => {
-      // Cleanup
-      mapInstance.destroy()
+      clearInterval(interval)
+      clearTimeout(timeout)
     }
-  }, [map, center.lat, center.lng, zoom, setMap, setLoading])
+  }, [setLoading])
+
+  // 지도 초기화
+  useEffect(() => {
+    if (!mapRef.current || map || !naverLoaded) return
+
+    console.log('Initializing map...')
+
+    try {
+      const mapInstance = new window.naver.maps.Map(mapRef.current, {
+        center: new window.naver.maps.LatLng(center.lat, center.lng),
+        zoom,
+        zoomControl: true,
+        zoomControlOptions: {
+          position: window.naver.maps.Position.TOP_RIGHT,
+        },
+        mapTypeControl: true,
+        mapTypeControlOptions: {
+          position: window.naver.maps.Position.TOP_LEFT,
+        },
+        scaleControl: true,
+        logoControl: false,
+        mapDataControl: false,
+      })
+
+      setMap(mapInstance)
+
+      // 지도 이벤트 리스너
+      window.naver.maps.Event.addListener(mapInstance, 'zoom_changed', () => {
+        const currentZoom = mapInstance.getZoom()
+        useMapStore.setState({ zoom: currentZoom })
+      })
+
+      window.naver.maps.Event.addListener(mapInstance, 'center_changed', () => {
+        const currentCenter = mapInstance.getCenter()
+        useMapStore.setState({
+          center: { lat: currentCenter.y, lng: currentCenter.x },
+        })
+      })
+
+      console.log('Map initialized successfully!')
+
+      return () => {
+        console.log('Destroying map...')
+        mapInstance.destroy()
+      }
+    } catch (error) {
+      console.error('Failed to initialize map:', error)
+      setLoading(false)
+    }
+  }, [naverLoaded, map, center.lat, center.lng, zoom, setMap, setLoading])
 
   // 현재 위치 마커 표시
   useEffect(() => {
-    if (!map || !currentLocation) return
+    if (!map || !currentLocation || !naverLoaded) return
 
-    const marker = new naver.maps.Marker({
-      position: new naver.maps.LatLng(currentLocation.lat, currentLocation.lng),
+    const marker = new window.naver.maps.Marker({
+      position: new window.naver.maps.LatLng(currentLocation.lat, currentLocation.lng),
       map,
       title: '현재 위치',
       icon: {
@@ -81,7 +117,7 @@ export function Map({ className = 'w-full h-full' }: MapProps) {
             box-shadow: 0 2px 4px rgba(0,0,0,0.3);
           "></div>
         `,
-        anchor: new naver.maps.Point(10, 10),
+        anchor: new window.naver.maps.Point(10, 10),
       },
       zIndex: 1000,
     })
@@ -89,11 +125,11 @@ export function Map({ className = 'w-full h-full' }: MapProps) {
     return () => {
       marker.setMap(null)
     }
-  }, [map, currentLocation])
+  }, [map, currentLocation, naverLoaded])
 
   // 검색 결과 마커 표시
   useEffect(() => {
-    if (!map) return
+    if (!map || !naverLoaded) return
 
     // 기존 마커 제거
     markersRef.current.forEach((marker) => marker.setMap(null))
@@ -106,8 +142,8 @@ export function Map({ className = 'w-full h-full' }: MapProps) {
     const newMarkers = results.map((place, index) => {
       const isSelected = selectedPlace?.id === place.id
 
-      const marker = new naver.maps.Marker({
-        position: new naver.maps.LatLng(place.lat, place.lng),
+      const marker = new window.naver.maps.Marker({
+        position: new window.naver.maps.LatLng(place.lat, place.lng),
         map,
         title: place.name,
         icon: {
@@ -142,15 +178,15 @@ export function Map({ className = 'w-full h-full' }: MapProps) {
               ">${index + 1}</div>
             </div>
           `,
-          anchor: new naver.maps.Point(16, 40),
+          anchor: new window.naver.maps.Point(16, 40),
         },
         zIndex: isSelected ? 100 : 10,
       })
 
       // 마커 클릭 이벤트
-      naver.maps.Event.addListener(marker, 'click', () => {
+      window.naver.maps.Event.addListener(marker, 'click', () => {
         useSearchStore.setState({ selectedPlace: place })
-        map.panTo(new naver.maps.LatLng(place.lat, place.lng))
+        map.panTo(new window.naver.maps.LatLng(place.lat, place.lng))
       })
 
       return marker
@@ -162,7 +198,7 @@ export function Map({ className = 'w-full h-full' }: MapProps) {
       markersRef.current.forEach((marker) => marker.setMap(null))
       markersRef.current = []
     }
-  }, [map, results, selectedPlace])
+  }, [map, results, selectedPlace, naverLoaded])
 
   return (
     <div className={className}>
