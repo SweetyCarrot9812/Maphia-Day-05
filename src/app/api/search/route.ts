@@ -39,7 +39,20 @@ export async function GET(request: NextRequest) {
     }
 
     const data = await response.json()
-    return NextResponse.json(data)
+
+    // Transform Naver API response to match frontend expectations
+    const places = (data.items || []).map((item: any) => ({
+      id: `${item.title}-${item.mapx}-${item.mapy}`,
+      name: item.title.replace(/<\/?b>/g, ''), // Remove <b> tags
+      address: item.address || '',
+      roadAddress: item.roadAddress || item.address || '',
+      category: item.category || '',
+      telephone: item.telephone || '',
+      lat: parseFloat((item.mapy / 10000000).toFixed(7)),
+      lng: parseFloat((item.mapx / 10000000).toFixed(7)),
+    }))
+
+    return NextResponse.json({ places })
   } catch (error) {
     console.error('Search API Error:', error)
     return NextResponse.json(
