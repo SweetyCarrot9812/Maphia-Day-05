@@ -87,16 +87,11 @@ export function Map({ className = 'w-full h-full' }: MapProps) {
       })
 
       console.log('Map initialized successfully!')
-
-      return () => {
-        console.log('Destroying map...')
-        mapInstance.destroy()
-      }
     } catch (error) {
       console.error('Failed to initialize map:', error)
       setLoading(false)
     }
-  }, [naverLoaded, map, center.lat, center.lng, zoom, setMap, setLoading])
+  }, [naverLoaded, map, setMap, setLoading, center.lat, center.lng, zoom])
 
   // 현재 위치 마커 표시
   useEffect(() => {
