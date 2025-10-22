@@ -21,11 +21,6 @@ export function ReviewForm({ placeId, placeName, onClose, onSuccess }: ReviewFor
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!user) {
-      toast.error('로그인이 필요합니다')
-      return
-    }
-
     if (!content.trim()) {
       toast.error('리뷰 내용을 입력하세요')
       return

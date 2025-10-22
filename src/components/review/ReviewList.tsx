@@ -69,7 +69,7 @@ export function ReviewList({ placeId }: ReviewListProps) {
   return (
     <div className="space-y-4">
       {reviews.map((review) => {
-        const isMyReview = user?.id === review.user_id
+        const isMyReview = false
 
         return (
           <div
